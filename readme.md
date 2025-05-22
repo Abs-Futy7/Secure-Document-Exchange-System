@@ -164,11 +164,11 @@ Secure-Document-Exchange-System/
 
 ## Screenshot
 
-![Screenshot of Secure Document Exchange System UI](Screenshot/receiever.png)
+![Screenshot of Secure Document Exchange System UI](screenshot/receiever.png)
 
 ---
 
-![Screenshot of Secure Document Exchange System UI](Screenshot/sender.png)
+![Screenshot of Secure Document Exchange System UI](screenshot/sender.png)
 
 ---
 

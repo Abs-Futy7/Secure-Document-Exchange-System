@@ -58,24 +58,58 @@ pip install -r requirements.txt
 
 ### 4. Generate certificates
 
-Navigate to the `certs` directory and run the following commands:
+Navigate to the project root and run the following commands to generate all necessary certificates and keys:
 
 ```bash
-# Create Root CA
+# Create directory for certs (if not done)
+mkdir certs
+cd certs
+
+# 1. Generate Root CA private key and self-signed certificate
 openssl genrsa -out rootCA.key 4096
-openssl req -x509 -new -nodes -key rootCA.key -sha256 -days 3650 -out rootCA.pem -subj "/C=US/O=SecureGov/CN=RootCA"
+openssl req -x509 -new -nodes -key rootCA.key -sha256 -days 3650 -out rootCA.pem \
+    -subj "/C=BD/ST=Dhaka/O=SecureGov/CN=RootCA"
 
-# Create sender certificate
+# 2. Generate Sender private key and CSR
 openssl genrsa -out sender.key 2048
-openssl req -new -key sender.key -out sender.csr -subj "/C=US/O=Ministry1/CN=sender"
-openssl x509 -req -in sender.csr -CA rootCA.pem -CAkey rootCA.key -CAcreateserial -out sender.crt -days 365 -sha256
+openssl req -new -key sender.key -out sender.csr -subj "/C=BD/ST=Dhaka/O=Ministry1/CN=sender"
 
-# Create receiver certificate with SAN for localhost
-# Create config file 'receiver_openssl.cnf' with SAN extension (see example in docs)
+# 3. Sign Sender CSR with Root CA to generate Sender certificate
+openssl x509 -req -in sender.csr -CA rootCA.pem -CAkey rootCA.key -CAcreateserial \
+    -out sender.crt -days 365 -sha256
+
+# 4. Create OpenSSL config file for Receiver with SAN (run this once, creates receiver_openssl.cnf)
+cat > receiver_openssl.cnf <<EOF
+[req]
+default_bits       = 2048
+prompt             = no
+default_md         = sha256
+req_extensions     = req_ext
+distinguished_name = dn
+
+[dn]
+C = BD
+ST = Dhaka
+O = Ministry2
+CN = localhost
+
+[req_ext]
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = localhost
+EOF
+
+# 5. Generate Receiver private key and CSR using the config file
 openssl genrsa -out receiver.key 2048
 openssl req -new -key receiver.key -out receiver.csr -config receiver_openssl.cnf
+
+# 6. Sign Receiver CSR with Root CA including SAN extension
 openssl x509 -req -in receiver.csr -CA rootCA.pem -CAkey rootCA.key -CAcreateserial \
--out receiver.crt -days 365 -sha256 -extfile receiver_openssl.cnf -extensions req_ext
+    -out receiver.crt -days 365 -sha256 -extfile receiver_openssl.cnf -extensions req_ext
+
+# 7. (Optional) Clean up CSR and serial files if you want
+rm sender.csr receiver.csr rootCA.srl
 ```
 
 ---
@@ -121,7 +155,7 @@ Secure-Document-Exchange-System/
 ├── seg_sender.py            # Sender client script
 ├── xml_utils.py             # Signing and verification helpers
 ├── requirements.txt         # Python dependencies
-├── Screenshot                 # Additional module directory (see below)
+├── Screenshot               # Additional module directory (see below)
 │   └── image.png           
 └── README.md                # This file
 ```
@@ -130,8 +164,11 @@ Secure-Document-Exchange-System/
 
 ## Screenshot
 
-![Screenshot of Secure Document Exchange System UI](screenshot/receiever.png)
-![Screenshot of Secure Document Exchange System UI](screenshot/sender.png)
+![Screenshot of Secure Document Exchange System UI](Screenshot/receiever.png)
+
+---
+
+![Screenshot of Secure Document Exchange System UI](Screenshot/sender.png)
 
 ---
 
@@ -157,12 +194,3 @@ Secure-Document-Exchange-System/
 
 This project is released under the MIT License.
 
----
-
-## Contact
-
-For questions or support, please contact [Your Name] at [your.email@example.com].
-
----
-
-Would you like me to help you generate the `receiver_openssl.cnf` example or prepare a `.gitignore` too?

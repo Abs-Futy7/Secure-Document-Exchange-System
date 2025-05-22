@@ -168,7 +168,7 @@ Secure-Document-Exchange-System/
 
 ---
 
-![Screenshot of Secure Document Exchange System UI](screenshot/sender.png)
+![Screenshot of Secure Document Exchange System UI](screenshot/ui.png)
 
 ---
 
